@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  TiHouseworkRealTimeServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0b827f3319f7447c6
+      AvailabilityZone: ap-northeast-2a
