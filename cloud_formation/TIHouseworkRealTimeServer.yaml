@@ -1,6 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
 Parameters:
+  ClusterNodeType:
+    Description: The compute and memory capacity of the nodes in the Redis Cluster
+    Type: String
+    Default: cache.t2.small
+    AllowedValues:
+    - cache.t2.small
+    - cache.m1.small
+    - cache.m1.large
   ApplicationInstanceType:
     Description: The compute and memory capacity of the application's EC2 instance type
     Type: String
@@ -14,6 +22,30 @@ Parameters:
     Default: mikesungunkim
 
 Resources:
+
+  # ELASTICACHE-redis
+  RedisCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      CacheNodeType: !Ref ClusterNodeType
+      VpcSecurityGroupIds:
+      - !GetAtt CacheSecurityGroup.GroupId
+      Engine: redis
+      NumCacheNodes: 1
+  CacheSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Cache security group
+  CacheSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt CacheSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !GetAtt RedisCluster.RedisEndpoint.Port
+      ToPort: !GetAtt RedisCluster.RedisEndpoint.Port
+      SourceSecurityGroupId: !GetAtt ApplicationSecurityGroup.GroupId
+
+  # BEANSTALK 
   TiHouseworkRealTimeServer:
     Type: AWS::ElasticBeanstalk::Application
     Properties:
@@ -25,6 +57,7 @@ Resources:
       Description: AWS ElasticBeanstalk TiHouseworkRealTimeServer Configuration Template
       SolutionStackName: "64bit Amazon Linux 2 v5.4.2 running Node.js 14"
       OptionSettings:
+          # Load Balancer Setting
         - Namespace: aws:elasticbeanstalk:environment
           OptionName: EnvironmentType
           Value: LoadBalanced
@@ -37,29 +70,54 @@ Resources:
         - Namespace: aws:elasticbeanstalk:environment:process:default
           OptionName: StickinessEnabled
           Value: 'true'
+          # BEANSTALK Setting
         - Namespace: aws:elasticbeanstalk:healthreporting:system
           OptionName: SystemType
           Value: enhanced
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: IamInstanceProfile
           Value: aws-elasticbeanstalk-ec2-role
+        - Namespace: aws:autoscaling:asg
+          OptionName: Custom Availability Zones
+          Value: 'ap-northeast-2a'
+          # EC2 Setting
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: InstanceType
           Value: !Ref ApplicationInstanceType
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: EC2KeyName
           Value: !Ref KeyName
-        - Namespace: aws:autoscaling:asg
-          OptionName: Custom Availability Zones
-          Value: 'ap-northeast-2a'
-  
   TiHouseworkRealTimeServerEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     Properties:
       ApplicationName: !Ref TiHouseworkRealTimeServer
       Description: AWS ElasticBeanstalk TiHouseworkRealTimeServer Environment
       TemplateName: !Ref TiHouseworkRealTimeServerConfigurationTemplate
-
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Application security group
+  ApplicationSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt ApplicationSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Load balancer security group
+  LoadBalancerSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      CidrIp: 0.0.0.0/0
+  
 Outputs:
   ApplicationUrl:
     Description: The URL to the load balancer for the application
