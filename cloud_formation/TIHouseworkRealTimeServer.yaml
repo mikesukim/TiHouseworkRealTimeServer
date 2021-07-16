@@ -23,7 +23,7 @@ Resources:
     Properties:
       ApplicationName: !Ref TiHouseworkRealTimeServer
       Description: AWS ElasticBeanstalk TiHouseworkRealTimeServer Configuration Template
-      PlatformArn: arn:aws:elasticbeanstalk:ap-northeast-2::platform/Node.js running on 64bit Amazon Linux
+      SolutionStackName: "64bit Amazon Linux 2 v5.4.2 running Node.js 14"
       OptionSettings:
         - Namespace: aws:elasticbeanstalk:environment
           OptionName: EnvironmentType
@@ -49,9 +49,10 @@ Resources:
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: EC2KeyName
           Value: !Ref KeyName
-        - Namespace: aws:elasticbeanstalk:container:nodejs
-          OptionName: NodeCommand
-          Value: npm start
+        - Namespace: aws:autoscaling:asg
+          OptionName: Custom Availability Zones
+          Value: 'ap-northeast-2a,ap-northeast-2b'
+  
   TiHouseworkRealTimeServerEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     Properties:
