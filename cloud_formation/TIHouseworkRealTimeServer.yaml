@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ApplicationInstanceType:
+    Description: The compute and memory capacity of the application's EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t2.micro
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    Default: mikesungunkim
+
+Resources:
+  TiHouseworkRealTimeServer:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      Description: AWS Elastic Beanstalk TiHouseworkRealTimeServer
+  TiHouseworkRealTimeServerConfigurationTemplate:
+    Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+    Properties:
+      ApplicationName: !Ref TiHouseworkRealTimeServer
+      Description: AWS ElasticBeanstalk TiHouseworkRealTimeServer Configuration Template
+      SolutionStackName: "64bit Amazon Linux 2 v5.4.2 running Node.js 14"
+      OptionSettings:
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: LoadBalanced
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: ServiceRole
+          Value: aws-elasticbeanstalk-service-role
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: aws:elasticbeanstalk:environment:process:default
+          OptionName: StickinessEnabled
+          Value: 'true'
+        - Namespace: aws:elasticbeanstalk:healthreporting:system
+          OptionName: SystemType
+          Value: enhanced
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: aws-elasticbeanstalk-ec2-role
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: !Ref ApplicationInstanceType
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: EC2KeyName
+          Value: !Ref KeyName
+        - Namespace: aws:autoscaling:asg
+          OptionName: Custom Availability Zones
+          Value: 'ap-northeast-2a,ap-northeast-2b'
+  
+  TiHouseworkRealTimeServerEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref TiHouseworkRealTimeServer
+      Description: AWS ElasticBeanstalk TiHouseworkRealTimeServer Environment
+      TemplateName: !Ref TiHouseworkRealTimeServerConfigurationTemplate
+
+Outputs:
+  ApplicationUrl:
+    Description: The URL to the load balancer for the application
+    Value: !GetAtt TiHouseworkRealTimeServerEnvironment.EndpointURL
