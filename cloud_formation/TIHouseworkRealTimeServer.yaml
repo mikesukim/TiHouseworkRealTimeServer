@@ -51,7 +51,7 @@ Resources:
           Value: !Ref KeyName
         - Namespace: aws:autoscaling:asg
           OptionName: Custom Availability Zones
-          Value: 'ap-northeast-2a,ap-northeast-2b'
+          Value: 'ap-northeast-2a'
   
   TiHouseworkRealTimeServerEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
