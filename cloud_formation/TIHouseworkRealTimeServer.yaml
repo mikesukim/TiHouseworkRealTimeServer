@@ -89,6 +89,7 @@ Resources:
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: NODE_ENV
           Value: !Sub "production"
+ 
   TiHouseworkRealTimeServerEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     Properties:

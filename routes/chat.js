@@ -4,8 +4,8 @@ const router = express.Router();
 const WebSocket = require('ws');
 const redis = require('redis');
 const redis_address = process.env.REDIS_ADDRESS || 'redis://127.0.0.1:6379';
-const subscriber = redis.createClient(redis_address);
-const publisher = redis.createClient(redis_address);
+// const subscriber = redis.createClient(redis_address);
+// const publisher = redis.createClient(redis_address);
 
 class RoomsManager {
   constructor() {
@@ -41,7 +41,13 @@ router.ws('/:user/:room', function(ws, req) {
   ws.on('message', function incoming(msg,isBinary) {
     data.message = msg;
     data.isBinary = isBinary;
-    publisher.publish('messageChannel', JSON.stringify(data));
+    // publisher.publish('messageChannel', JSON.stringify(data));
+    for (const [username, rws] of Object.entries(roomsManager.rooms[data.room])) {
+      if (username !== data.sender && rws.readyState === WebSocket.OPEN){
+        rws.send(data.message,{ binary: data.isBinary });
+      }
+    }
+
   });
 
   ws.on('close', function() {
@@ -55,20 +61,19 @@ router.ws('/:user/:room', function(ws, req) {
 });
 
 
-subscriber.on('message', function(channel,message){
-  switch(channel){
-    case 'messageChannel':
-      const data = JSON.parse(message);
-      for (const [username, rws] of Object.entries(roomsManager.rooms[data.room])) {
-        if (username !== data.sender && rws.readyState === WebSocket.OPEN){
-          rws.send(data.message,{ binary: data.isBinary });
-        }
-      }
-      break;
-    default:
-      console.log('error')
-  } 
-
-});
-subscriber.subscribe('messageChannel');
+// subscriber.on('message', function(channel,message){
+//   switch(channel){
+//     case 'messageChannel':
+//       const data = JSON.parse(message);
+//       for (const [username, rws] of Object.entries(roomsManager.rooms[data.room])) {
+//         if (username !== data.sender && rws.readyState === WebSocket.OPEN){
+//           rws.send(data.message,{ binary: data.isBinary });
+//         }
+//       }
+//       break;
+//     default:
+//       console.log('error')
+//   } 
+// });
+// subscriber.subscribe('messageChannel');
 module.exports = router;
