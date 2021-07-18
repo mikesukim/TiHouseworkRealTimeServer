@@ -7,7 +7,7 @@ var path = require('path');
 
 var app = express();
 const expressWS = require('express-ws')(app) 
-const aWss = expressWS.getWss('/chat');
+const aWss = module.exports = expressWS.getWss('/chat');
 
 var indexRouter = require('./routes/index');
 var chatRouter = require('./routes/chat');
@@ -16,7 +16,6 @@ var usersRouter = require('./routes/users');
 // // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-app.set('aWss', aWss);
 
 app.use(logger('dev'));
 app.use(express.json());
