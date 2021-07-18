@@ -4,11 +4,7 @@ Parameters:
   ClusterNodeType:
     Description: The compute and memory capacity of the nodes in the Redis Cluster
     Type: String
-    Default: cache.t2.small
-    AllowedValues:
-    - cache.t2.small
-    - cache.m1.small
-    - cache.m1.large
+    Default: cache.t3.micro
   ApplicationInstanceType:
     Description: The compute and memory capacity of the application's EC2 instance type
     Type: String
@@ -27,7 +23,8 @@ Resources:
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
-      CacheNodeType: !Ref ClusterNodeType
+      #CacheNodeType: !Ref ClusterNodeType
+      CacheNodeType: "cache.t3.micro"
       VpcSecurityGroupIds:
       - !GetAtt CacheSecurityGroup.GroupId
       Engine: redis
@@ -44,7 +41,6 @@ Resources:
       FromPort: !GetAtt RedisCluster.RedisEndpoint.Port
       ToPort: !GetAtt RedisCluster.RedisEndpoint.Port
       SourceSecurityGroupId: !GetAtt ApplicationSecurityGroup.GroupId
-
   # BEANSTALK 
   TiHouseworkRealTimeServer:
     Type: AWS::ElasticBeanstalk::Application
@@ -87,6 +83,12 @@ Resources:
         - Namespace: aws:autoscaling:launchconfiguration
           OptionName: EC2KeyName
           Value: !Ref KeyName
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: REDIS_ADDRESS
+          Value: !Sub "redis://${RedisCluster.RedisEndpoint.Address}:${RedisCluster.RedisEndpoint.Port}"
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: NODE_ENV
+          Value: !Sub "production"
   TiHouseworkRealTimeServerEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     Properties:
