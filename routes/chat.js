@@ -4,7 +4,7 @@ const router = express.Router();
 const WebSocket = require('ws');
 const redis = require('redis');
 const redis_address = process.env.REDIS_ADDRESS || 'redis://127.0.0.1:6379';
-// const subscriber = redis.createClient(redis_address);
+const subscriber = redis.createClient(redis_address);
 // const publisher = redis.createClient(redis_address);
 
 class RoomsManager {
