@@ -38,17 +38,36 @@ router.ws('/:user/:room', function(ws, req) {
   const user = req.params.user 
   const room = req.params.room
   console.log('Open connection for user:' + user + ' room:' + room);
+
+  // join room
   roomsManager.joinRoom(room,user,ws);
+
+  // prepare data to send
   const jsonData = {
     room: room,
     sender: user,
-    action: ACTION_TYPE.MESSAGE,
+    action: null,
     data: null,
     isBinary:null,
  };
   ws.on('message', function incoming(msg,isBinary) {
-    jsonData.data = msg;
-    jsonData.isBinary = isBinary;
+    
+    // check incoming msg format
+    try {
+      const incomingData = JSON.parse(msg);
+
+       // fill rest of data to send
+      jsonData.data = incomingData.data;
+      jsonData.action = ACTION_TYPE.MESSAGE;
+      jsonData.isBinary = isBinary;
+    } catch(e) {
+      ws.send("incorrect data format", err => {
+        ws.close()
+        if (err) { return console.error(err); }
+      })
+    }
+  
+    // publish to redis
     publisher.publish('messageChannel', JSON.stringify(jsonData));
   });
 
