@@ -3,9 +3,10 @@ const router = express.Router();
 
 const WebSocket = require('ws');
 const redis = require('redis');
+const { json } = require('express');
 const redis_address = process.env.REDIS_ADDRESS || 'redis://127.0.0.1:6379';
-// const subscriber = redis.createClient(redis_address);
-// const publisher = redis.createClient(redis_address);
+const subscriber = redis.createClient(redis_address);
+const publisher = redis.createClient(redis_address);
 
 class RoomsManager {
   constructor() {
@@ -24,6 +25,12 @@ class RoomsManager {
   }
 }
 
+const ACTION_TYPE = {
+  MESSAGE: 'message',
+  ADD_USER: 'add_user',
+  REMOVE_USER: 'remove_user'
+}
+
 // user should be unique
 const roomsManager = new RoomsManager();
 router.ws('/:user/:room', function(ws, req) {
@@ -32,22 +39,17 @@ router.ws('/:user/:room', function(ws, req) {
   const room = req.params.room
   console.log('Open connection for user:' + user + ' room:' + room);
   roomsManager.joinRoom(room,user,ws);
-  const data = {
+  const jsonData = {
     room: room,
     sender: user,
-    message: null,
+    action: ACTION_TYPE.MESSAGE,
+    data: null,
     isBinary:null,
  };
   ws.on('message', function incoming(msg,isBinary) {
-    data.message = msg;
-    data.isBinary = isBinary;
-    // publisher.publish('messageChannel', JSON.stringify(data));
-    for (const [username, rws] of Object.entries(roomsManager.rooms[data.room])) {
-      if (username !== data.sender && rws.readyState === WebSocket.OPEN){
-        rws.send(data.message,{ binary: data.isBinary });
-      }
-    }
-
+    jsonData.data = msg;
+    jsonData.isBinary = isBinary;
+    publisher.publish('messageChannel', JSON.stringify(jsonData));
   });
 
   ws.on('close', function() {
@@ -60,20 +62,27 @@ router.ws('/:user/:room', function(ws, req) {
   })
 });
 
-
-// subscriber.on('message', function(channel,message){
-//   switch(channel){
-//     case 'messageChannel':
-//       const data = JSON.parse(message);
-//       for (const [username, rws] of Object.entries(roomsManager.rooms[data.room])) {
-//         if (username !== data.sender && rws.readyState === WebSocket.OPEN){
-//           rws.send(data.message,{ binary: data.isBinary });
-//         }
-//       }
-//       break;
-//     default:
-//       console.log('error')
-//   } 
-// });
-// subscriber.subscribe('messageChannel');
+subscriber.on('message', function(channel,message){
+  switch(channel){
+    case 'messageChannel':
+      const jsonData = JSON.parse(message);
+      // broadcasting to all room users
+      for (const [username, rws] of Object.entries(roomsManager.rooms[jsonData.room])) {
+        if (username !== jsonData.sender && rws.readyState === WebSocket.OPEN){
+          rws.send(JSON.stringify({
+            action: jsonData.action,
+            data : jsonData.data,
+            sender: jsonData.sender,
+          }),{ binary: jsonData.isBinary });
+        }
+      }
+      break;
+    default:
+      console.log('error')
+  } 
+});
+subscriber.on('error', function(error){
+  console.log(error);
+})
+subscriber.subscribe('messageChannel');
 module.exports = router;
