@@ -10,16 +10,23 @@ CloudServer stack : AWS Beanstalk(Load Balancer+Ec2) + ElastiCache(Redis)  <br>
 
 ## Getting Started / 어떻게 시작하나요?
 ### Prerequisites / 선행 조건
-
+- redis server
+- node
 ### Installation / 설치
-
+```
+npm install
+```
 ### Running / 실행
+```
+redis-server
+node app.js
+```
+
 ## Deployment / 배포
-
-## Built With / 누구랑 만들었나요?
-
-* [이름](링크) - 무엇 무엇을 했어요
-* [Name](Link) - Create README.md
+```
+cd cloud_formation
+npm run deploy
+```
 
 ## Contributiong / 기여
 

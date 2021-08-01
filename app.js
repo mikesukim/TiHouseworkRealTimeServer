@@ -42,9 +42,20 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
+const hostname = '192.168.1.66';
 const port = process.env.PORT || "8000";
-app.listen(port, () => {
-  console.log(`Listening to requests on http://localhost:${port}`);
-});
+
+if (process.env.NODE_ENV == 'production'){
+  app.listen(port, () => {
+    // console.log(`Listening to requests on http://localhost:${port}`);
+    console.log('Listening to requests on remote');
+  });
+}
+else{
+  app.listen(port,hostname, () => {
+    // console.log(`Listening to requests on http://localhost:${port}`);
+    console.log('Listening to requests on local wifi');
+  });
+}
+
 module.exports = app;

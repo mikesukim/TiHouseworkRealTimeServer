@@ -31,11 +31,21 @@ const ACTION_TYPE = {
   REMOVE_USER: 'remove_user'
 }
 
+//TESTING PURPOSE ONLY  DELETE AFTER TESTING/////////////
+// var userNum = 0;
+//TESTING PURPOSE ONLY  DELETE AFTER TESTING/////////////
+
+
 // user should be unique
 const roomsManager = new RoomsManager();
 router.ws('/:user/:room', function(ws, req) {
   // connected to websocket
-  const user = req.params.user 
+  const user = req.params.user
+//TESTING PURPOSE ONLY  DELETE AFTER TESTING/////////////
+// const user = userNum.toString();
+// userNum += 1;
+// console.log(userNum);
+//TESTING PURPOSE ONLY  DELETE AFTER TESTING/////////////
   const room = req.params.room
   console.log('Open connection for user:' + user + ' room:' + room);
 
