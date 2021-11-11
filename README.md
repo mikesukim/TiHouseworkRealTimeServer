@@ -4,9 +4,10 @@
 티 안나는 집안일, 티나게 하자! [서버]<br>
 
 ## About The Project
+### Notion Page : https://msukim.notion.site/Back-end-9de21a7f4b864ed1af9a9e3ba6d3d335
+### Developemnt Log Page : https://msukim.notion.site/Back-end-9de21a7f4b864ed1af9a9e3ba6d3d335
 CloudServer stack : AWS Beanstalk(Load Balancer+Ec2) + ElastiCache(Redis)  <br>
 
-**Notion Page : https://witty-anorak-6de.notion.site/Ti-housework**
 
 ## Getting Started / 어떻게 시작하나요?
 ### Prerequisites / 선행 조건
